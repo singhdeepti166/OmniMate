@@ -1071,7 +1071,7 @@ function App() {
     <div className={`app mode-${currentMode}`}>
       <header className="header">
         <div>
-          <h1>✨ Omnimate</h1>
+          <h1>✨ OmniMate</h1>
           <p>
             {currentMode === "study" && "📚 Study Mode"}
             {currentMode === "coding" && "💻 Coding Mode"}
