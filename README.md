@@ -6,6 +6,12 @@
 
 OmniMate combines a Python-based backend with a modern web frontend to provide an integrated AI assistant experience.
 
+## 🌐 Live Demo
+
+Try OmniMate here:
+
+👉 https://omnimate-ai.netlify.app/
+
 ## Tech Stack
 
 ### Backend
