@@ -777,3 +777,58 @@ body.light-theme {
     box-shadow: 8px 0 30px rgba(0, 0, 0, 0.4);
   }
 }
+
+
+@media (max-width: 700px) {
+
+  
+  .header > div:first-child { flex: none; }
+  .header h1 { white-space: nowrap; font-size: 17px; }
+  .status { flex-wrap: nowrap; white-space: nowrap; gap: 6px; }
+  .streak-badge { white-space: nowrap; }
+
+  
+  .input-area {
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+  .attachment-container { order: 1; }
+
+  .web-search-toggle {
+    order: 2;
+    width: 38px;
+    padding: 0;
+    font-size: 0;                 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .web-search-toggle::before {
+    content: "\1F50D";
+    font-size: 16px;
+  }
+
+  .input-area textarea {
+    order: 3;
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 0;
+  }
+
+  .voice-controls { order: 4; margin-left: 0; }
+  .voice-selector { display: none; }   
+
+  .send-button {
+    order: 5;
+    min-width: 58px;
+  }
+
+  .assistant-row { flex-wrap: wrap; }
+  .assistant-row .message {
+    flex: 1 1 100%;
+    max-width: 100%;
+  }
+  .voice-output-button { margin-top: 0; }
+
+  
+}
