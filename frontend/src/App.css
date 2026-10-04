@@ -669,3 +669,111 @@ body.light-theme {
     width: 200px;
   }
 }
+
+
+.history-overlay { display: none; }   
+
+@media (max-width: 700px) {
+
+  
+  .header {
+    flex-wrap: nowrap;
+    padding: 8px 12px;
+    min-height: 56px;
+    gap: 8px;
+  }
+  .header p,
+  .auth-user,
+  .logout-button,
+  .theme-toggle { display: none; }
+
+  .status { gap: 8px; font-size: 11px; }
+  .streak-badge { padding: 4px 9px; font-size: 12px; }
+  .settings-button { padding: 6px 12px; font-size: 12px; }
+
+  
+  .show-history-button {
+    top: 10px;
+    left: 12px;
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    font-size: 0;               
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+  }
+  .show-history-button::before {
+    content: "\2630";          
+    font-size: 18px;
+    color: var(--text);
+  }
+
+  
+  .mode-selector {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    width: calc(100% - 46px);
+    margin: 0 0 4px 46px;
+    scrollbar-width: none;
+  }
+  .mode-selector::-webkit-scrollbar { display: none; }
+  .mode-button {
+    flex: none;
+    padding: 8px 14px;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+
+  .chat-actions { flex-wrap: wrap; }
+  .new-chat-button,
+  .call-button,
+  .clear-button {
+    flex: 1;
+    justify-content: center;
+    height: 34px;
+    font-size: 12px;
+  }
+
+  
+  .level-toggle,
+  .quick-actions {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    white-space: nowrap;
+    padding: 8px 12px 0;
+    scrollbar-width: none;
+  }
+  .level-toggle::-webkit-scrollbar,
+  .quick-actions::-webkit-scrollbar { display: none; }
+  .level-label,
+  .level-button,
+  .quick-action-button { flex: none; }
+
+  
+  .history-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 99;
+  }
+  .status-text { display: none; }
+
+  
+  .hint { display: none; }
+
+  
+  .history-sidebar {
+    width: 55%;
+    min-width: 0;
+    max-width: 280px;
+    top: 0;
+    left: 0;
+    height: 100%;
+    z-index: 100;
+    box-shadow: 8px 0 30px rgba(0, 0, 0, 0.4);
+  }
+}

@@ -147,7 +147,7 @@ function App() {
   const [messages, setMessages] = useState([{ role: "assistant", text: MODE_WELCOME.general }]);
   const [currentChatId, setCurrentChatId] = useState(null);
   const [chatHistory, setChatHistory] = useState([]);
-  const [historyVisible, setHistoryVisible] = useState(true);
+  const [historyVisible, setHistoryVisible] = useState(() => window.innerWidth > 700);
   const [loading, setLoading] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [editingIndex, setEditingIndex] = useState(null);
@@ -1105,6 +1105,9 @@ function App() {
       </header>
 
       <div className="app-body">
+      {historyVisible && (
+  <div className="history-overlay" onClick={() => setHistoryVisible(false)} />
+)}
         {historyVisible && (
           <aside className="history-sidebar">
             <div className="history-sidebar-header">
