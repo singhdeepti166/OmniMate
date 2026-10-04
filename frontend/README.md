@@ -1,16 +1,122 @@
-# React + Vite
+# OmniMate 🤖
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**OmniMate** is a personal all-rounder AI assistant designed to bring intelligent interaction, productivity, and automation into one place.
 
-Currently, two official plugins are available:
+## ✨ Overview
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+OmniMate combines a Python-based backend with a modern web frontend to provide an integrated AI assistant experience.
 
-## React Compiler
+## 🛠️ Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Backend
+- Python
+- FastAPI
+- Uvicorn
+- SQLite
+- ONNX Runtime
 
-## Expanding the ESLint configuration
+### Frontend
+- React
+- Vite
+- JavaScript
+- CSS
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### AI / Voice
+- ONNX-based speech model
+- Piper TTS
+- Edge TTS
+- Google AI services
+
+## 📁 Project Structure
+
+```text
+AI APP/
+├── backend/
+│   ├── ai_service.py
+│   ├── auth_service.py
+│   ├── database.py
+│   ├── document_service.py
+│   ├── main.py
+│   ├── maps_service.py
+│   ├── safety.py
+│   ├── search_service.py
+│   ├── tts_service.py
+│   ├── weather_service.py
+│   ├── requirements.txt
+│   └── ...
+│
+├── frontend/
+│   ├── public/
+│   └── src/
+│       ├── assets/
+│       ├── App.jsx
+│       ├── App.css
+│       ├── index.css
+│       └── main.jsx
+│
+├── .gitignore
+├── package-lock.json
+├── README.md
+└── ...
+```
+
+## 🚀 Getting Started
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/singhdeepti166/OmniMate.git
+cd OmniMate
+```
+
+### 2. Backend Setup
+
+Create a Python virtual environment:
+
+```powershell
+cd backend
+python -m venv .venv
+```
+
+Activate the virtual environment:
+
+```powershell
+.venv\Scripts\Activate.ps1
+```
+
+Install the required dependencies:
+
+```powershell
+pip install -r requirements.txt
+```
+
+Start the FastAPI backend:
+
+```powershell
+uvicorn main:app --reload
+```
+
+### 3. Frontend Setup
+
+Open a new terminal in the project directory and run:
+
+```powershell
+cd frontend
+npm install
+```
+
+Start the frontend:
+
+```powershell
+npm run dev
+```
+
+## 🔐 Privacy & Security
+
+OmniMate is designed with user control and privacy in mind.
+
+Sensitive configuration files, virtual environments, local databases, and other development-specific files are excluded from version control through `.gitignore`.
+
+## 👩‍💻 Developer
+
+**Deepti Singh**
