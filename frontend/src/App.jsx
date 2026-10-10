@@ -5,6 +5,7 @@ import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 import "./App.css";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+const APP_NAME = "Omnimate";
 
 const MODES = [
   { id: "general", label: "💬 General", description: "Normal conversation" },
@@ -14,18 +15,12 @@ const MODES = [
   { id: "agent", label: "🧠 Agent", description: "Multi-step task mode" },
 ];
 
-const APP_NAME = "Omnimate";
-
 const MODE_WELCOME = {
   general: `Hello! 👋 I'm ${APP_NAME}. How can I help you today?`,
-  study:
-    `📚 Study Mode is on!\n\nI'm ${APP_NAME}. I can explain topics, help with homework, and create quizzes or flashcards.\n\nTry:\n- Explain photosynthesis\n- Make a quiz on Python loops\n- Make flashcards on Operating Systems`,
-  coding:
-    `💻 Coding Mode is on!\n\nI'm ${APP_NAME}. I can explain code, find bugs, and suggest better approaches.\n\nPaste your code or describe the problem.`,
-  career:
-    `💼 Career Mode is on!\n\nI'm ${APP_NAME}. I can analyze your resume, suggest improvements, and guide your career path.\n\nUpload your resume or type: Analyze my resume`,
-  agent:
-    `🧠 Agent Mode is on!\n\nI'm ${APP_NAME}. Give me a goal — I'll break it into steps, use tools if needed, and deliver a final result.\n\nTry:\n- Check Delhi weather and suggest a plan\n- Find nearby hospitals in Mumbai\n- Research latest AI news and summarize`,
+  study: `📚 Study Mode is on!\n\nI'm ${APP_NAME}. I can explain topics, help with homework, and create quizzes or flashcards.\n\nTry:\n- Explain photosynthesis\n- Make a quiz on Python loops\n- Make flashcards on Operating Systems`,
+  coding: `💻 Coding Mode is on!\n\nI'm ${APP_NAME}. I can explain code, find bugs, and suggest better approaches.\n\nPaste your code or describe the problem.`,
+  career: `💼 Career Mode is on!\n\nI'm ${APP_NAME}. I can analyze your resume, suggest improvements, and guide your career path.\n\nUpload your resume or type: Analyze my resume`,
+  agent: `🧠 Agent Mode is on!\n\nI'm ${APP_NAME}. Give me a goal — I'll break it into steps, use tools if needed, and deliver a final result.\n\nTry:\n- Check Delhi weather and suggest a plan\n- Find nearby hospitals in Mumbai\n- Research latest AI news and summarize`,
 };
 
 const MODE_QUICK_ACTIONS = {
@@ -54,6 +49,11 @@ const MODE_QUICK_ACTIONS = {
     { label: "📄 Analyze Resume", text: "Analyze my resume" },
     { label: "💼 Job roles", text: "Suggest suitable job roles for my profile" },
     { label: "🎤 Interview prep", text: "Give me interview questions for a software developer role" },
+  ],
+  agent: [
+    { label: "🌦️ Weather plan", text: "Check Delhi weather and suggest what I should do today" },
+    { label: "🗺️ Nearby + tips", text: "Find nearby hospitals in Mumbai and give safety tips" },
+    { label: "📰 Research", text: "Research latest AI news and give a short summary with sources" },
   ],
 };
 
@@ -191,6 +191,16 @@ function App() {
 
   const authHeaders = () => (authToken ? { Authorization: `Bearer ${authToken}` } : {});
 
+  const handleUnauthorized = () => {
+    localStorage.removeItem("auth_token");
+    localStorage.removeItem("auth_user");
+    setAuthToken("");
+    setAuthUser("");
+    setChatHistory([]);
+    setCurrentChatId(null);
+    setAuthError("Session expired. Please login again.");
+  };
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -211,9 +221,6 @@ function App() {
     setStudyStreak(newStreak);
   };
 
-  // FIX 1: removed duplicate loadChatHistory() call from this effect —
-  // only cleanup runs on mount now; history loading happens in the
-  // dedicated [authToken] effect below.
   useEffect(() => {
     return () => {
       if (recognitionRef.current) {
@@ -258,6 +265,10 @@ function App() {
     try {
       setHistoryLoading(true);
       const response = await fetch(`${API_URL}/chats`, { headers: { ...authHeaders() } });
+      if (response.status === 401) {
+        handleUnauthorized();
+        return;
+      }
       const data = await response.json();
       if (!response.ok) throw new Error(data.detail || data.message || "Could not load chat history.");
       setChatHistory(data.chats || []);
@@ -338,8 +349,6 @@ function App() {
     if (!cleanText) return;
     const cacheKey = createTTSCacheKey(cleanText, selectedVoice);
 
-    // FIX 3: cap the TTS blob cache so it doesn't grow unbounded over a
-    // long session — evict the oldest entry once we hit the limit.
     if (!ttsCacheRef.current.has(cacheKey) && ttsCacheRef.current.size >= 20) {
       const oldestKey = ttsCacheRef.current.keys().next().value;
       const oldestUrl = ttsCacheRef.current.get(oldestKey);
@@ -495,6 +504,12 @@ function App() {
         headers: { ...authHeaders() },
         body: formData,
       });
+
+      if (response.status === 401) {
+        handleUnauthorized();
+        throw new Error("Session expired. Please login again.");
+      }
+
       const data = await response.json();
       if (!response.ok) throw new Error(data.detail || data.message || "Something went wrong.");
       if (data.chat_id) setCurrentChatId(data.chat_id);
@@ -563,15 +578,11 @@ function App() {
     setOpenMenu(null);
   };
 
-  // FIX 2: regenerate now also re-sends web-search intent and, if the
-  // original user message had an attachment, flags it to the backend
-  // via `existing_attachment_url` so context isn't silently dropped.
   const regenerateMessage = async (index) => {
     if (loading || messages[index]?.role !== "assistant") return;
     const userIndex = index - 1;
     if (userIndex < 0 || messages[userIndex]?.role !== "user") return;
     const userMessage = messages[userIndex].text;
-    const userAttachment = messages[userIndex].attachment;
     setOpenMenu(null);
     setLoading(true);
     try {
@@ -579,22 +590,16 @@ function App() {
       formData.append("message", userMessage);
       formData.append("mode", currentMode);
       formData.append("explain_level", explainLevel);
-      const shouldSearch =
-        webSearchEnabled ||
-        /\b(latest|today|current|news|who is the|prime minister)\b/i.test(userMessage);
-      formData.append("web_search_enabled", shouldSearch ? "true" : "false");
       if (currentChatId !== null) formData.append("chat_id", String(currentChatId));
-      if (userAttachment?.url || userAttachment?.attachment_url) {
-        formData.append(
-          "existing_attachment_url",
-          userAttachment.url || userAttachment.attachment_url
-        );
-      }
       const response = await fetch(`${API_URL}/chat`, {
         method: "POST",
         headers: { ...authHeaders() },
         body: formData,
       });
+      if (response.status === 401) {
+        handleUnauthorized();
+        throw new Error("Session expired. Please login again.");
+      }
       const data = await response.json();
       if (!response.ok) throw new Error(data.detail || data.message || "Could not regenerate.");
       if (data.chat_id) setCurrentChatId(data.chat_id);
@@ -661,6 +666,10 @@ function App() {
         headers: { ...authHeaders() },
         body: formData,
       });
+      if (response.status === 401) {
+        handleUnauthorized();
+        throw new Error("Session expired. Please login again.");
+      }
       const data = await response.json();
       if (!response.ok) throw new Error(data.detail || data.message || "Could not create new chat.");
       setCurrentChatId(data.chat_id);
@@ -689,6 +698,10 @@ function App() {
         method: "DELETE",
         headers: { ...authHeaders() },
       });
+      if (response.status === 401) {
+        handleUnauthorized();
+        throw new Error("Session expired. Please login again.");
+      }
       const data = await response.json();
       if (!response.ok) throw new Error(data.detail || data.message || "Could not delete chat.");
       setCurrentChatId(null);
@@ -716,6 +729,10 @@ function App() {
       const response = await fetch(`${API_URL}/chats/${historyItem.id}`, {
         headers: { ...authHeaders() },
       });
+      if (response.status === 401) {
+        handleUnauthorized();
+        throw new Error("Session expired. Please login again.");
+      }
       const data = await response.json();
       if (!response.ok) throw new Error(data.detail || data.message || "Could not load chat.");
       setCurrentChatId(historyItem.id);
@@ -743,6 +760,10 @@ function App() {
         method: "DELETE",
         headers: { ...authHeaders() },
       });
+      if (response.status === 401) {
+        handleUnauthorized();
+        throw new Error("Session expired. Please login again.");
+      }
       const data = await response.json();
       if (!response.ok) throw new Error(data.detail || data.message || "Could not delete chat.");
       if (currentChatId === historyId) {
@@ -759,11 +780,7 @@ function App() {
     }
   };
 
-  // FIX 4: check for a saved voice-input language preference first,
-  // falling back to the old browser-language guess.
   const getRecognitionLanguage = () => {
-    const savedLang = localStorage.getItem("preferred_voice_lang");
-    if (savedLang) return savedLang;
     const lang = navigator.language?.toLowerCase() || "";
     return lang.startsWith("hi") ? "hi-IN" : "en-IN";
   };
@@ -1071,11 +1088,12 @@ function App() {
     <div className={`app mode-${currentMode}`}>
       <header className="header">
         <div>
-          <h1>✨ OmniMate</h1>
+          <h1>✨ {APP_NAME}</h1>
           <p>
             {currentMode === "study" && "📚 Study Mode"}
             {currentMode === "coding" && "💻 Coding Mode"}
             {currentMode === "career" && "💼 Career Mode"}
+            {currentMode === "agent" && "🧠 Agent Mode"}
             {currentMode === "general" && "Ask me anything"}
           </p>
         </div>
@@ -1105,9 +1123,7 @@ function App() {
       </header>
 
       <div className="app-body">
-      {historyVisible && (
-  <div className="history-overlay" onClick={() => setHistoryVisible(false)} />
-)}
+        {historyVisible && <div className="history-overlay" onClick={() => setHistoryVisible(false)} />}
         {historyVisible && (
           <aside className="history-sidebar">
             <div className="history-sidebar-header">
@@ -1192,12 +1208,7 @@ function App() {
             >
               📞 {isCallMode ? "End Call" : "AI Call"}
             </button>
-            <button
-              className="clear-button"
-              onClick={clearMessages}
-              disabled={loading || !currentChatId}
-              type="button"
-            >
+            <button className="clear-button" onClick={clearMessages} disabled={loading || !currentChatId} type="button">
               🗑️ Clear
             </button>
           </div>
@@ -1242,7 +1253,7 @@ function App() {
               <div className="call-avatar">🤖</div>
               <div>
                 <strong>AI Call Mode</strong>
-                <p>Speak naturally with your AI Assistant.</p>
+                <p>Speak naturally with {APP_NAME}.</p>
               </div>
               <button type="button" className="call-mic-button" onClick={startVoiceInput} disabled={loading}>
                 {isListening ? "🎙️ Listening..." : "🎙️ Speak"}
@@ -1437,6 +1448,8 @@ function App() {
                   ? "Ask to explain, quiz, or flashcards..."
                   : currentMode === "coding"
                   ? "Paste code or describe your problem..."
+                  : currentMode === "agent"
+                  ? "Describe your goal for Omnimate..."
                   : "Type your message..."
               }
               rows="1"
